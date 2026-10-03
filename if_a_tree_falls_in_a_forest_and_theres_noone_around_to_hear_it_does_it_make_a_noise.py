@@ -5,9 +5,9 @@ from sklearn import tree
 training_df = pd.read_csv("dry_bean_train.csv")
 test_df = pd.read_csv("dry_bean_train.csv").drop(columns="Class").values.tolist()
 
-x = df.drop(columns="Class").values.tolist()
-y = df["Class"].astype("category").cat.codes.tolist()
-bean_types = dict(enumerate(df["Class"].astype("category").cat.categories))
+x = training_df.drop(columns="Class").values.tolist()
+y = training_df["Class"].astype("category").cat.codes.tolist()
+bean_types = dict(enumerate(training_df["Class"].astype("category").cat.categories))
 
 # print(classifiers)
 # print(features)
@@ -20,7 +20,7 @@ bean_types = dict(enumerate(df["Class"].astype("category").cat.categories))
 clf = tree.DecisionTreeClassifier().fit(x, y)
 
 beans = []
-for bean in clf.predict(test):
+for bean in clf.predict(test_df):
     beans.append(bean_types[bean])
 
 
