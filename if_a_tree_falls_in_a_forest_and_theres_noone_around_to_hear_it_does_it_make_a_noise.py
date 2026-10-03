@@ -29,9 +29,8 @@ for bean in clf.predict(test_df):
     beans.append(bean_types[bean])
 
 print(unique_bean_classes)
-print(type(y))
 
-def stratified_kfold(k: int) -> List[List[int]]:
+def stratified_kfold(k: int) -> List[pd.DataFrame]:
     folds: List[List[int]] = [[] for _ in range(k)]
     seed = 0
     rng = np.random.default_rng(seed)
@@ -49,10 +48,8 @@ def stratified_kfold(k: int) -> List[List[int]]:
     #for i in folds:
     #    bean_types_in_fold = [beans_by_class[idx] for idx in i]
     #    print(f"fold {folds.index(i)}: {bean_types_in_fold}")
-    return folds
+    return [df.iloc[fold] for fold in folds]
+
 # dot_data = tree.export_graphviz(clf, out_file=None)
 # graph = graphviz.Source(dot_data)
 # graph = graph.render("beans")
-
-for fold in stratified_kfold(5):
-    print(f"Fold {stratified_kfold(5).index(fold)}: {fold}")
