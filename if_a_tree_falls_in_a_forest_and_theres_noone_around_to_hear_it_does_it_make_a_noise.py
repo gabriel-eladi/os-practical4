@@ -1,14 +1,9 @@
 import graphviz
 import pandas as pd
-<<<<<<< HEAD
-from sklearn import tree
-import RandomForest
-=======
 import numpy as np
 from sklearn import tree        
 import RandomForest
 from collections import Counter
->>>>>>> ff36e060196c27b345cc25d92f88bf6a3252a8b1
 
 training_df = pd.read_csv("dry_bean_train.csv")
 test_df = pd.read_csv("dry_bean_test.csv").values.tolist()
@@ -17,31 +12,11 @@ test_df = pd.read_csv("dry_bean_test.csv").values.tolist()
 #y = training_df["Class"].astype("category").cat.codes.tolist()
 #bean_types = dict(enumerate(training_df["Class"].astype("category").cat.categories))
 
-<<<<<<< HEAD
-# print(classifiers)
-# print(features)
-
-# le = LabelEncoder()
-
-# print(f"number of rows = {len(rows)}, number of features = {len(fields)}")
-# print("field names: [" + ', '.join(fields) + ']')
-
-#clf = tree.DecisionTreeClassifier().fit(x, y)
-
-#beans = []
-
-# for bean in clf.predict(test_df):
-    #beans.append(bean_types[bean])
-=======
 clf = tree.DecisionTreeClassifier().fit(x, y)
 
 #print(unique_bean_classes)
->>>>>>> ff36e060196c27b345cc25d92f88bf6a3252a8b1
 
 
-<<<<<<< HEAD
-#print(beans[0:10])
-=======
         # Shuffle the filtered beans to ensure randomness
         rng.shuffle(filtered_beans)
 
@@ -54,7 +29,6 @@ clf = tree.DecisionTreeClassifier().fit(x, y)
     #    bean_types_in_fold = [beans_by_class[idx] for idx in i]
     #    print(f"fold {folds.index(i)}: {bean_types_in_fold}")
     return [df.iloc[fold] for fold in folds]
->>>>>>> ff36e060196c27b345cc25d92f88bf6a3252a8b1
 
 def forest_accuracy(bean_predictions, true_classes):
     predictions = []
