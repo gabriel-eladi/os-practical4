@@ -4,11 +4,10 @@ import numpy as np
 
 class RandomForest:
 
-    def init(self, treeCount=10000, featureSetCount=3, sampleSize=100, sampleCount=5, trainingDataset=None, testingDataset=None):
+    def __init__(self, trainingDataset: pd.DataFrame, testingDataset: pd.DataFrame, treeCount=10000, featureSetCount=3, sampleSize=1000):
         self.treeCount = treeCount
         self.featureSetCount = featureSetCount
         self.sampleSize = sampleSize
-        self.sampleCount = sampleCount
         self.trainingDataset = trainingDataset
         self.testingDataset = testingDataset 
 
@@ -18,24 +17,35 @@ class RandomForest:
         self.beanResults = []
 
     def createForest(self):
-        for i in range(self.treeCount): #for each new tree
-            self.featureSets = self.trainingDataset.drop(columns="Class").sample(n=self.featureSetCount, axis='columns', replace=True) #remove class from random selection of columns
-            self.featureSets["Class"] = self.trainingDataset["Class"] #add class back on
-            for j in range(self.sampleCount):
-                start = np.random.randint(0, len(self.featureSets) - self.sampleSize + 1)
-                self.trainSample = pd.concat([self.trainSample, self.featureSets.iloc[start:start + self.sampleSize]], axis=0)
+        features = self.trainingDataset.drop(columns="Class")
 
-            self.treeSampleList.append(self.trainSample)
-            self.trainSample = pd.DataFrame()
+        # For each new tree
+        for i in range(self.treeCount):
+            cols = features.sample(n=self.featureSetCount, axis="columns", replace=True).columns.tolist()
+            cols = list(dict.fromkeys(cols))  
+            sample = self.trainingDataset.sample(n=self.sampleSize, replace=True)
+            self.treeSampleList.append((cols, sample[cols + ["Class"]]))
 
     def getForestResult(self):
-        for sample in self.treeSampleList:
-            x = self.sample.drop(columns="Class").values.tolist()
-            y = self.sample["Class"].astype("category").cat.codes.tolist()
-            bean_types = dict(enumerate(self.trainSample["Class"].astype("category").cat.categories))
+        X_test = self.testingDataset.drop(columns="Class")
+        for cols, sample in self.treeSampleList:
+            x = sample[cols].values.tolist()
+            y = sample["Class"]
             clf = tree.DecisionTreeClassifier().fit(x, y)
 
-            beans = []
-            for bean in clf.predict(self.testingDataset):
-                beans.append(bean_types[bean])
-            self.beanResults.append(beans)
+            preds = clf.predict(X_test[cols].values.tolist())
+            self.beanResults.append(preds.tolist())
+
+    def getForestResult(self, dataset=None):
+        if dataset is None:
+            dataset = self.testingDataset
+        # Clear previous results (in case we want the test fold results after getting the training fold results)
+        self.beanResults = []
+        # Data set could be ither the training fold or the testing fold
+        X = dataset.drop(columns="Class")
+        # Predict
+        for cols, sample in self.treeSampleList:
+            x = sample[cols].values.tolist()
+            y = sample["Class"]
+            clf = tree.DecisionTreeClassifier().fit(x, y)
+            self.beanResults.append(clf.predict(X[cols].values.tolist()).tolist())
