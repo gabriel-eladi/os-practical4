@@ -92,9 +92,12 @@ final_forest = RandomForest.RandomForest(trainingDataset=training_df,
 final_forest.createForest()
 final_forest.getForestResult(test_df)           
 
+# Drop old prediction column
 output_df = test_df.drop(columns="Class", errors="ignore").copy()
-output_df["Class"] = final_forest.beanPredictions                    # new last column
+# Add new class column
+output_df["Class"] = final_forest.beanPredictions                    
 output_df.to_csv("forest.csv", index=False)
+print("forest.csv complete!")
 print(output_df["Class"].value_counts())
 # Tree visualization (optional)
 # dot_data = tree.export_graphviz(clf, out_file=None)
