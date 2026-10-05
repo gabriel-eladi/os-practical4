@@ -26,16 +26,6 @@ class RandomForest:
             sample = self.trainingDataset.sample(n=self.sampleSize, replace=True)
             self.treeSampleList.append((cols, sample[cols + ["Class"]]))
 
-    def getForestResult(self):
-        X_test = self.testingDataset.drop(columns="Class")
-        for cols, sample in self.treeSampleList:
-            x = sample[cols].values.tolist()
-            y = sample["Class"]
-            clf = tree.DecisionTreeClassifier().fit(x, y)
-
-            preds = clf.predict(X_test[cols].values.tolist())
-            self.beanResults.append(preds.tolist())
-
     def getForestResult(self, dataset=None):
         if dataset is None:
             dataset = self.testingDataset
