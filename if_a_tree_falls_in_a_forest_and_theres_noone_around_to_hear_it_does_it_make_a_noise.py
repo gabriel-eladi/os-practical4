@@ -7,7 +7,7 @@ from collections import Counter
 from typing import List
 
 training_df = pd.read_csv("dry_bean_train.csv")
-test_df = pd.read_csv("dry_bean_test.csv").values.tolist()
+test_df = pd.read_csv("dry_bean_test.csv")
 
 x = training_df.drop(columns="Class").values.tolist()
 y = training_df["Class"].astype("category").cat.codes.tolist()
@@ -65,7 +65,7 @@ scores = []
 for i in range(len(folds)):
     train_df = pd.concat([fold for j, fold in enumerate(folds) if j != i])
     # Each forrest gets a random sample
-    forest = RandomForest.RandomForest(trainingDataset=train_df, testingDataset=folds[i], treeCount=1000, featureSetCount=12, sampleSize=1000) 
+    forest = RandomForest.RandomForest(trainingDataset=train_df, testingDataset=folds[i], treeCount=100, featureSetCount=12, sampleSize=100) 
     forest.createForest()
     # Predict the training folds
     forest.getForestResult(train_df)                       
@@ -86,6 +86,16 @@ for i in range(len(folds)):
 
 print(f"Average testing accuracy: {np.average(scores):.4f}")
 
+final_forest = RandomForest.RandomForest(trainingDataset=training_df,
+                                         testingDataset=test_df,
+                                         treeCount=100, featureSetCount=12, sampleSize=1000)
+final_forest.createForest()
+final_forest.getForestResult(test_df)           
+
+output_df = test_df.drop(columns="Class", errors="ignore").copy()
+output_df["Class"] = final_forest.beanPredictions                    # new last column
+output_df.to_csv("forest.csv", index=False)
+print(output_df["Class"].value_counts())
 # Tree visualization (optional)
 # dot_data = tree.export_graphviz(clf, out_file=None)
 # graph = graphviz.Source(dot_data)

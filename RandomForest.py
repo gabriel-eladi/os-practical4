@@ -15,6 +15,7 @@ class RandomForest:
         self.trainSample = pd.DataFrame()
         self.treeSampleList = []
         self.beanResults = []
+        self.beanPredictions = []
 
     def createForest(self):
         features = self.trainingDataset.drop(columns="Class")
@@ -32,10 +33,11 @@ class RandomForest:
         # Clear previous results (in case we want the test fold results after getting the training fold results)
         self.beanResults = []
         # Data set could be ither the training fold or the testing fold
-        X = dataset.drop(columns="Class")
+        X = X = dataset.drop(columns="Class", errors="ignore")
         # Predict
         for cols, sample in self.treeSampleList:
             x = sample[cols].values.tolist()
             y = sample["Class"]
             clf = tree.DecisionTreeClassifier().fit(x, y)
-            self.beanResults.append(clf.predict(X[cols].values.tolist()).tolist())
+            self.beanPredictions = clf.predict(X[cols].values.tolist()).tolist()
+            self.beanResults.append(self.beanPredictions)
