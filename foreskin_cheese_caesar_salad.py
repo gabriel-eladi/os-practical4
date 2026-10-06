@@ -1,9 +1,12 @@
+# Cross validation Balanced Accuracy Score = 0.9412
+
 import torch
 import torch.nn as nn
 import pandas as pd
 import numpy as np
 from torch.utils.data import Dataset, DataLoader
 from sklearn.model_selection import train_test_split
+from sklearn.metrics import balanced_accuracy_score
 from sklearn.preprocessing import LabelEncoder, StandardScaler
 
 
@@ -42,6 +45,7 @@ class beanNeuralNetwork(nn.Module):
         self.relu = nn.ReLU(inplace=True)
         self.function2 = nn.Linear(hidden_size, output_size)
         self.softMax = nn.Softmax(dim=1)
+        self.dropout = nn.Dropout(p=0.2)
 
         self.trainingDataset = trainingDataset
         self.testingDataset = testingDataset
@@ -79,8 +83,8 @@ class beanNeuralNetwork(nn.Module):
         x = self.function1(x)
         x = self.batchNorm(x)
         x = self.relu(x)
+        x = self.dropout(x)
         x = self.function2(x)
-        # CrossEntropyLoss has softmax already, so comment out the below line when switching to it
         x = self.softMax(x)
         return x
     
@@ -123,11 +127,9 @@ class beanNeuralNetwork(nn.Module):
         train_loader = DataLoader(train_dataset, batch_size=self.batch_size, shuffle=True)
         valid_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False)
 
-        #==================================================================================================
         # Loss function (switch between default pytorch one and our custom one)
         # criterion = nn.CrossEntropyLoss()
         criterion = self.loss
-        #==================================================================================================
         
         # Optimizer (the thing changing the neuron weights)
         optimizer = torch.optim.SGD(
@@ -136,6 +138,7 @@ class beanNeuralNetwork(nn.Module):
         )
 
         # Training loop
+        validation_balanced_accuracies = []
         for epoch in range(epochs):
             self.train()
             total_train_loss = 0.0
@@ -162,6 +165,8 @@ class beanNeuralNetwork(nn.Module):
             total_val_loss = 0.0
             correct = 0
             total = 0
+            validation_predictions = []
+            validation_targets = []
 
             with torch.no_grad():
                 for bean_batch, label_batch in valid_loader:
@@ -173,16 +178,37 @@ class beanNeuralNetwork(nn.Module):
                     predicted_classes = torch.argmax(predictions, dim=1)
                     correct += (predicted_classes == label_batch).sum().item()
                     total += label_batch.size(0)
+                    validation_predictions.extend(predicted_classes.tolist())
+                    validation_targets.extend(label_batch.tolist())
 
             valid_loss = total_val_loss / len(valid_loader)
             valid_acc = correct / total
+            valid_balanced_acc = balanced_accuracy_score(
+                validation_targets, validation_predictions
+            )
+            validation_balanced_accuracies.append(valid_balanced_acc)
             print(f"Epoch {epoch + 1}/{epochs} | "f"Training Loss: {train_loss:.4f} | "
-                f"Validation Loss: {valid_loss:.4f} | "f"Validation Accuracy: {valid_acc:.4f}")
+                f"Validation Loss: {valid_loss:.4f} | "f"Validation Accuracy: {valid_acc:.4f} | "
+                f"Validation Balanced Accuracy: {valid_balanced_acc:.4f}")
+            
+        if validation_balanced_accuracies:
+            average_balanced_acc = np.mean(validation_balanced_accuracies)
+            print(f"Average validation balanced accuracy: {average_balanced_acc:.4f}")
 
+    def predict(self, input_data):
+        with torch.no_grad():
+            scaler = StandardScaler()
+            input_tensor = torch.as_tensor(scaler.fit_transform(input_data), dtype=torch.float32)
+            probabilities = self(input_tensor)
+            predicted_classes = torch.argmax(probabilities, dim=1)
+        return predicted_classes.tolist()
 
 #==================================================================================================
 training_df = pd.read_csv("dry_bean_train.csv")
 test_df = pd.read_csv("dry_bean_test.csv")
+beans_by_class = training_df["Class"].values
+unique_bean_classes = np.unique(training_df["Class"])
+bean_types = dict(enumerate(training_df["Class"].astype("category").cat.categories))
 
 # after training on many ranging values for the the different hyperparameters,
 # we found the following combination of hyperparameters to produce the most accurate model (0.9435 validation accuracy trained over 200 epochs)
@@ -197,7 +223,15 @@ mlp = beanNeuralNetwork(
     validation_share=0.2
 )
 
-
 mlp.train_model(epochs=200)
 mlp.save_model()
+
+#mlp.load_model("bean_model.pt")
+# Drop old prediction column
+output_df = test_df.copy()
+# Add new class column
+output_df["Target"] = [bean_types[i] for i in mlp.predict(test_df.to_numpy())]
+output_df.to_csv("network.csv", index=False)
+print("network.csv complete!")
+print(output_df["Target"].value_counts())
 # mlp.load_model()

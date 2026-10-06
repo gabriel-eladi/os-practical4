@@ -1,9 +1,12 @@
+# Cross validation Balanced Accuracy Score = 0.9082
+
 import graphviz
 import pandas as pd
 import numpy as np
 from sklearn import tree        
 from collections import Counter
 from typing import List
+from sklearn.metrics import balanced_accuracy_score
 
 class RandomForest:
 
@@ -90,11 +93,7 @@ def forest_accuracy(bean_predictions, true_classes):
         # Take the most voted class as the prediction      
         predictions.append(winning_class)
 
-    correct = 0
-    for predicted, actual in zip(predictions, true_classes):
-        if predicted == actual:
-            correct += 1
-    return correct / len(true_classes)
+    return balanced_accuracy_score(true_classes, predictions)
 
 # Generate folds
 folds = stratified_kfold(k=10)
@@ -123,7 +122,7 @@ for i in range(len(folds)):
     # Calculate accuracy
     scores.append(test_acc)
 
-print(f"Average testing accuracy: {np.average(scores):.4f}")
+print(f"Average balanced testing accuracy: {np.average(scores):.4f}")
 
 final_forest = RandomForest(trainingDataset=training_df,
                                          testingDataset=test_df,
@@ -132,12 +131,12 @@ final_forest.createForest()
 final_forest.getForestResult(test_df)           
 
 # Drop old prediction column
-output_df = test_df.drop(columns="Class", errors="ignore").copy()
+output_df = test_df.copy()
 # Add new class column
-output_df["Class"] = final_forest.beanPredictions                    
+output_df["Target"] = final_forest.beanPredictions                    
 output_df.to_csv("forest.csv", index=False)
 print("forest.csv complete!")
-print(output_df["Class"].value_counts())
+print(output_df["Target"].value_counts())
 # Tree visualization (optional)
 # dot_data = tree.export_graphviz(clf, out_file=None)
 # graph = graphviz.Source(dot_data)
