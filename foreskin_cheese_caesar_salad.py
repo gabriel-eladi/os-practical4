@@ -134,7 +134,7 @@ class beanNeuralNetwork(nn.Module):
             self.parameters(),
             lr=self.learning_rate
         )
-        
+
         # Training loop
         for epoch in range(epochs):
             self.train()
@@ -176,25 +176,28 @@ class beanNeuralNetwork(nn.Module):
 
             valid_loss = total_val_loss / len(valid_loader)
             valid_acc = correct / total
-
             print(f"Epoch {epoch + 1}/{epochs} | "f"Training Loss: {train_loss:.4f} | "
-                  f"Validation Loss: {valid_loss:.4f} | "f"Validation Accuracy: {valid_acc:.4f}")
+                f"Validation Loss: {valid_loss:.4f} | "f"Validation Accuracy: {valid_acc:.4f}")
 
 
 #==================================================================================================
 training_df = pd.read_csv("dry_bean_train.csv")
 test_df = pd.read_csv("dry_bean_test.csv")
 
+# after training on many ranging values for the the different hyperparameters,
+# we found the following combination of hyperparameters to produce the most accurate model (0.9435 validation accuracy trained over 200 epochs)
 mlp = beanNeuralNetwork(
     trainingDataset=training_df,
     testingDataset=test_df,
     input_size=16,
-    hidden_size=100,
+    hidden_size=64,
     output_size=16,
-    learning_rate=0.01,
-    batch_size=50,
+    learning_rate=0.1,
+    batch_size=32,
     validation_share=0.2
 )
-mlp.train_model(epochs=50)
-# mlp.save_model()
+
+
+mlp.train_model(epochs=200)
+mlp.save_model()
 # mlp.load_model()
