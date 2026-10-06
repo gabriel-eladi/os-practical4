@@ -80,9 +80,26 @@ class beanNeuralNetwork(nn.Module):
         x = self.batchNorm(x)
         x = self.relu(x)
         x = self.function2(x)
-        # CrossEntropyLoss has softmax already, uncomment this when we plug in our own loss function
-        # x = self.softMax(x)
+        # CrossEntropyLoss has softmax already, so comment out the below line when switching to it
+        x = self.softMax(x)
         return x
+    
+    # |  ||
+    # || |_
+    def loss(self, probabilities, targets):
+        p_correct = probabilities[torch.arange(probabilities.size(0)), targets] # probaabilities that the correct bean was predicted
+        p_correct = torch.clamp(p_correct, min=1e-12) # clamping minimum probability values to prevent log(0) (illegal math)
+        return -(torch.log(p_correct).mean()) # computing negative log likelihood
+
+    def save_model(self, path="bean_model.pt"):
+        torch.save(self.state_dict(), path)
+        print(f"Model saved to {path}!")
+
+    def load_model(self, path="bean_model.pt"):
+        state = torch.load(path, map_location="cpu", weights_only=True)
+        self.load_state_dict(state)
+        self.eval()  # switch to inference mode
+        print(f"Model loaded from {path}!")
     
     def train_model(self, epochs=50):
         # Get features X and labels y
@@ -107,8 +124,9 @@ class beanNeuralNetwork(nn.Module):
         valid_loader = DataLoader(val_dataset, batch_size=self.batch_size, shuffle=False)
 
         #==================================================================================================
-        # Loss function (plug new one here)
-        criterion = nn.CrossEntropyLoss()
+        # Loss function (switch between default pytorch one and our custom one)
+        # criterion = nn.CrossEntropyLoss()
+        criterion = self.loss
         #==================================================================================================
         
         # Optimizer (the thing changing the neuron weights)
@@ -178,3 +196,5 @@ mlp = beanNeuralNetwork(
     validation_share=0.2
 )
 mlp.train_model(epochs=50)
+# mlp.save_model()
+# mlp.load_model()
