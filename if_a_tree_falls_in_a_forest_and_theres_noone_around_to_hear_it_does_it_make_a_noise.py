@@ -1,6 +1,6 @@
-# Cross validation Balanced Accuracy Score = 0.9082
+# Cross validation Balanced Accuracy Score = 0.9065
 
-import graphviz
+# import graphviz
 import pandas as pd
 import numpy as np
 from sklearn import tree        
@@ -8,8 +8,10 @@ from collections import Counter
 from typing import List
 from sklearn.metrics import balanced_accuracy_score
 
-class RandomForest:
+# seed used for all randomness, to maintain reproducability 
+SEED = 1337
 
+class RandomForest:
     def __init__(self, trainingDataset: pd.DataFrame, testingDataset: pd.DataFrame, treeCount=10000, featureSetCount=3, sampleSize=1000):
         self.treeCount = treeCount
         self.featureSetCount = featureSetCount
@@ -28,9 +30,9 @@ class RandomForest:
 
         # For each new tree
         for i in range(self.treeCount):
-            cols = features.sample(n=self.featureSetCount, axis="columns", replace=True).columns.tolist()
+            cols = features.sample(n=self.featureSetCount, axis="columns", replace=True, random_state=SEED*i).columns.tolist()
             cols = list(dict.fromkeys(cols))  
-            sample = self.trainingDataset.sample(n=self.sampleSize, replace=True)
+            sample = self.trainingDataset.sample(n=self.sampleSize, replace=True, random_state=(SEED+1)*i)
             self.treeSampleList.append((cols, sample[cols + ["Class"]]))
 
     def getForestResult(self, dataset=None):
@@ -44,7 +46,7 @@ class RandomForest:
         for cols, sample in self.treeSampleList:
             x = sample[cols].values.tolist()
             y = sample["Class"]
-            clf = tree.DecisionTreeClassifier().fit(x, y)
+            clf = tree.DecisionTreeClassifier(random_state=SEED).fit(x, y)
             self.beanPredictions = clf.predict(X[cols].values.tolist()).tolist()
             self.beanResults.append(self.beanPredictions)
 
@@ -57,14 +59,13 @@ beans_by_class = training_df["Class"].values
 unique_bean_classes = np.unique(training_df["Class"])
 bean_types = dict(enumerate(training_df["Class"].astype("category").cat.categories))
 
-clf = tree.DecisionTreeClassifier().fit(x, y)
+# clf = tree.DecisionTreeClassifier().fit(x, y)
 
 #print(unique_bean_classes)
 
 def stratified_kfold(k: int) -> List[pd.DataFrame]:
     folds: List[List[int]] = [[] for _ in range(k)]
-    seed = 0
-    rng = np.random.default_rng(seed)
+    rng = np.random.default_rng(SEED)
     for bean_class in unique_bean_classes:
         # Beans that matches the current class
         filtered_beans = np.where(beans_by_class == bean_class)[0]

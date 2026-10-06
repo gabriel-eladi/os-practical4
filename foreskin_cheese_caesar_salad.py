@@ -1,4 +1,4 @@
-# Cross validation Balanced Accuracy Score = 0.9412
+# Cross validation Balanced Accuracy Score = 0.9370
 
 import torch
 import torch.nn as nn
@@ -209,6 +209,11 @@ test_df = pd.read_csv("dry_bean_test.csv")
 beans_by_class = training_df["Class"].values
 unique_bean_classes = np.unique(training_df["Class"])
 bean_types = dict(enumerate(training_df["Class"].astype("category").cat.categories))
+
+# fixed seed for all the random functions, to ensure reproducible results
+SEED = 1234
+torch.manual_seed(SEED)
+np.random.seed(SEED)
 
 # after training on many ranging values for the the different hyperparameters,
 # we found the following combination of hyperparameters to produce the most accurate model (0.9435 validation accuracy trained over 200 epochs)
